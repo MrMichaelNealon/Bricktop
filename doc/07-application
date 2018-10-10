@@ -1,0 +1,239 @@
+07 - application.
+
+
+Finally, we're going to build our application. First, remember the
+app/ directory? This is where we will put our application code,
+remember how it is divided into 3 sub-directories:
+
+    app/
+        models/
+        views/
+        controllers/
+
+Now, first thing to note is that we can change the name of the
+app directory if we want to. It's best to do so - give it a name
+that describes the application.
+
+To do this we simply change the name of the app directory to
+whatever we want and then change the APP_PATH value in the
+src/configs/app.js script.
+
+    APP_PATH = "app";
+
+In this case since it's a very simple demo app we will leave it
+as is but it's worth noting.
+
+
+The loadAppComponents() function
+
+The src/scripts/app.js script contains the loadAppComponents()
+function, this function is used to load our mvc components.
+
+Yes - the whole idea is that we have a model, view and controller
+that creates and manages each of our components. For now we'll
+just build a simple app to demonstrate how it all works.
+
+The first thing we need to do is mark our main function as
+async:
+
+    async main function() {
+
+    }
+
+We don't necessarily *need* to, but it's a good idea because
+it will give us immediate access to our controller once it's
+loaded as you will see.
+
+The loadAppComponents() function accepts two arguments,
+the first argument is the name of our component. Remember, a
+component is actually made up of 3 parts, a controller, a
+model and a view. So loadAppComponents() is going to try
+and load 3 components. The second argument is a callback to
+call when the load completes successfully but we can happily
+leave that null'd.
+
+Let's create an MVC component called testapp - first we will
+write a simple model.
+
+
+Model
+
+All the model is supposed to do is manage data, or in our
+case datasets, so our model will do noting more than set a
+value in a dataset. Here is app/models/testapp.js:
+
+    ///////////////////////////////////////////////////////////
+    //  app/models/testapp.js
+    //
+
+    var testappModel = function() {
+        // Define "some" = "data"
+        dataset.setValue("some", "data");
+    };
+
+Simple enough, now we need a view. The view is intended to
+do nothing more than manage the display - what we can see.
+
+
+View
+
+So in our case the view will output the value that is set
+by the model. Here is app/views/testapp.js:
+
+    ///////////////////////////////////////////////////////////
+    //  app/views/testapp.js
+    //
+
+    var testappView = function() {
+        // Dump "some" data to the view - this method must
+        // be called by the controller
+        this.dumpData = function(data_name) {
+            console.log("Some data again: " + dataset.getValue(data_name));
+        };
+    }
+
+Again, very basic.
+
+
+Controller
+
+The last thing we need to create is the controller - it is
+important to note that your controller should accept two
+arguments - the first a reference to the model, the second
+a reference to the view. The controller should store these as
+local properties.
+
+Here's the file app/controllers/testapp.js:
+
+    ///////////////////////////////////////////////////////////
+    //  app/controllers/testapp.js
+    //
+
+    var testappController = function(
+        model,
+        view
+    ) {
+        this.model = model
+        this.view = view;
+
+        // Simple example - this calls the dumpData()
+        // metthod in the view to output "some" data
+        // that was defined in the model.
+        //
+        this.dumpData = function() {
+            this.view.dumpData("some");
+        };
+    }
+
+Again, nothing too complex. So how do we load these files?
+
+
+Naming conventions
+
+You will notice that all 3 of our files have the exact same
+name, you will also notice that all 3 of our component
+objects uses this same string as a prefix followed by either
+Model, View or Controller:
+
+    testappModel
+    testappView
+    testappController
+
+This is an important convention that must be followed, our
+component identifier in this case is the prefix "testapp",
+this is the component we must tell loadAppComponents() to
+load:
+
+    // No callback on completion.
+    loadAppComponents("testapp", false);
+
+The loadAppComponents() function will attempt to load:
+
+    app/models/testapp.js
+    app/views/testapp.js
+    app/controllers/testapp.js
+
+And instantiate the objects:
+
+    model = new testappModel();
+    view = new testappView();
+    controller = new testappController(model, view);
+
+So what happens to that controller? The loadAppComponents()
+function uses promises to verify the loading of the app
+components and cannot return the controller to us, so how
+to get at it? There are a few ways.
+
+
+The callback
+
+We can use a callback, standard stuff - the callback will
+receive a parameter that is our controller. Let's do it!
+
+    ///////////////////////////////////////////////////////
+    // src/scripts/main.js
+    //
+
+    function newController(controller) {
+        // Call the dumpData() method in our controller,
+        // this will call the dumpData() method in the
+        // view
+        controller.dumpData();
+    }
+
+    async function main() {
+        // Load our testapp
+        loadAppComponents("testapp", newController);
+    }
+
+That's it! I don't like this method, however. We want to get
+at the controller right there in the main() function.
+
+Which is why we've marked the function as async - this allows
+us to use await and get our controller immediately.
+
+
+Controllers dataset
+
+First thing we need to do is create a new dataset called
+controllers. This is another dataset with a special purpose,
+the purpose being to store references to all of our controllers.
+
+This means that the loadAppComponents() function will save
+our controller reference as "controllers:testapp".
+
+We must also call loadAppComponents() using the 'await'
+keyword so that the "controllers:testapp" value is available
+immediately after loadAppComponents() returns.
+
+This is great because we're no longing chaining loads of
+callbacks together to handle application flow - here's the
+updated main() function:
+
+    ///////////////////////////////////////////////////////////
+    //  src/scripts/main.js
+    //
+
+    async function main() {
+        // If the "controllers" dataset exists, loadAppComponents()
+        // will automatically add a reference to the controller it
+        // creates - so let's create it.
+        dataset.newDataset("controllers", []);
+
+        // await the output of loadAppComponents - this gives us
+        // immediate access to the controller reference in the
+        // controllers dataset which is very handy indeed.
+        await loadAppComponents("testapp", false);
+
+        // Grab the reference to our new controller.
+        var ctr = dataset.getValue("controllers:testapp");
+
+        // We can now use our controller right here!
+        ctr.dumpData("some");
+    }
+
+So we've trimmed our lovely main() function down to 4 lines
+of code if you rip the comments.
+
+Pretty neat, using this system we can easily create and manage
+individual components.

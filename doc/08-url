@@ -1,0 +1,125 @@
+08 - url
+
+
+Bricktop was designed to create front-end applications, more
+specifically - it was created to be used on the git pages
+platform.
+
+Git pages is an amazing resource for developers who want to
+showcase front-end projects - it's free, the only downside
+is that we can't run any back-end code, no niceties like
+.htaccess and so on.
+
+We also need to do routing and url parsing in JavaScript,
+which was challenging for someone more used to doing such
+things with php.
+
+
+Parameters
+
+We can't do url re-writing with .htaccess but we want our
+url's to at least be pretty and readable.
+
+We have two options available, we can have our parameters
+in the url follow either a # or an ?. By default it will be
+? (see src/objects/objURL.js for more info).
+
+We also need to identify what character will separate our
+parameters in the url, by default this character is /
+
+So, in short, the format of an expected url will be:
+
+    www.domain.com?param_1/param_2/param_2 ...
+
+The object is to break this information down into component
+parts for quick and easy reference. A common approach with an
+MVC application is that param_1 will invoke a specific
+controller, maybe have param_2 reference a particular method
+within that controller.
+
+You really should check out src/objects/objURL.js - this
+provides the objURL object which defines various parameters
+used to parse and store the data - the file is well commented
+and explains what each individual property actually does.
+
+For this example we will assume default objURL configuration
+as it's good enough for most cases. As stated we will be using
+? as the parameter identifier and / as the parameter separator.
+
+
+Parsing a url
+
+The url will be parsed into a dataset called "url_dataset" by
+default (can be changed in objURL).
+
+The dataset will contain the following 3 properties (assuming
+default objURL):
+
+    url_domain      - contains the www.domain.com portion of
+                      the parse url.
+    url_params      - contains the parameter string of the
+                      url - example: param_1/param_2/param_3
+    url_param       - Array of parsed parameters
+
+The identifier and separators are also stored in the dataset
+which is handy if we need to rebuild the url for any reason:
+
+    url_param_identifier
+    url_param_separator
+
+All we need to do is call the parseURL() function and it
+will parse the url into the dataset, here's an example
+that will clarify:
+
+    ///////////////////////////////////////////////////////////
+    //  src/scripts/main.js
+    //
+
+    function main() {
+        // Parse the url into the "url_dataset" dataset.
+        parseURL();
+
+        // "url_dataset:url_id" stores the complete,
+        // unparsed url
+        var url = dataset.getValue("url_dataset:url_id");
+
+        // "url_dataset:url_domain" and "url_dataset:url_params"
+        // return the domain and parameter strings, respectively.
+        var domain = dataset.getValue("url_dataset:url_domain");
+        var params = dataset.getValue("url_dataset:url_params");
+
+        // These returns the identifier and separators used to
+        // parse the url.
+        var identifier = dataset.getValue("url_dataset:url_param_identifier");
+        var separator = dataset.getValue("url_dataset:url_param_separator");
+
+        console.log("Parsed url: " + url);
+        console.log("url domain: " + domain);
+        console.log("url params: " + params);
+        console.log("url identifier: " + identifier);
+        console.log("url separator: " + separator);
+
+        // "url_dataset:url_param" returns the array of
+        // parsed parameters.
+        var urlParam = dataset.getValue("url_dataset:url_param");
+        urlParam.forEach(function(p) {
+            console.log("Param  = " + p);
+        });
+    }
+
+
+The objURL object
+
+As mention, it can be used to configure how parseURL() builds
+the dataset, what keys ir used to store data, etc.
+
+It's unlikely that you'll need to change it at all, the idea is
+that we can tweak objURL on the fly and use parseURL to parse
+various types of url.
+
+It's important to note that the parseURL() function when called
+without a parameter will default to using window.location.href,
+however we can pass a url directly to parseURL() and have it
+parse that instead:
+
+    parseURL("www.someotherurl.com?pa/ra/ms");

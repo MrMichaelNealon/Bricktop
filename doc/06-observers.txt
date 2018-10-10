@@ -1,0 +1,204 @@
+06 - observers
+
+
+We can subscribe any number of observers to the dataset or part
+of it very easily. Let's say we want to call a function any time
+a value in the dataset is updated...first we need the callback
+function:
+
+    // The function will receive the name of the dataset that
+    // is updated, the name of the variable in that dataset and
+    // the updated value
+    //
+    function handleUpdate(dataset_id, var_name, var_data) {
+        console.log(var_name + " in " + dataset_id + "set to " + var_data);
+    }
+
+Now we need to add the observer, when we add an observer we
+pass one parameter, an object to be exact:
+
+    function newDatasetCreated(dataset_id, data) {
+        // Your
+    }
+
+    function newValueCreated(dataset_id, var_name, var_data) {
+        // Code
+    }
+
+    function updatedValue(dataset_id, var_name, var_data) {
+        // Here
+    }
+
+    dataset.addObserver({
+        "newDatasetCallback": newDatasetCreated,
+        "newValueCallback": newValueCreated,
+        "updatedValueCallback": valueUpdated
+    });
+
+So if a new dataset is created, newDatasetCreated() is fired, and
+so on.
+
+The newValueCallback and updateValueCallback functions will be
+passed all of the expected data, they're just strings telling you
+what actually changed.
+
+The newDatasetCallback function receives the dataset_id and a
+possible array - this is because the newDataset() method can
+be passed an array of values to be set:
+
+    dataset.newDataset("id" [
+        { "name": "my_var", "data": "my data" },
+        { "name": "another_var", "data", "More data" }
+    ]);
+
+And this will be passed to any function that is observing the
+data for changes.
+
+In most cases, however, we will want to observe the data in
+a specific dataset, or a specific value within a dataset.
+
+For this we have an additional 3 options we can pass to the
+addObserver() method:
+
+    "matchDataset"
+    "matchName"
+    "match"
+
+Let's say we want to be notified any time any value in a specific
+dataset is updated:
+
+    dataset.addObserver({
+        "matchDataset" "my-dataset",
+        "match": callThisFunction
+    });
+
+Let's say instead that we want to be notified any time a variable
+named "my_var" is updated:
+
+    dataset.addObserver({
+        "matchName": "my_var",
+        "match":callThisFunction
+    });
+
+However, that will notify you any time any value names "my_var"
+is updated...regardless of what dataset it's in. We can be more
+specific and say we only want norified when "my_var" is updated
+in "my-dataset":
+
+    dataset.addObserver({
+        "matchDataset": "my-dataset",
+        "matchName": "my_var",
+        "match": callThisFunction
+    });
+
+Let's create another application to demonstrate this. We'll build
+a simple component that will begin with red text.
+
+After a timeout of 5 seconds, we will update the style in the
+dataset that will change the color attribute - this data wil
+be observed, the data change will trigger a handler that will
+re-render the page, applying the new style.
+
+
+    ///////////////////////////////////////////////////////////
+    //  src/scripts/main.js
+    //
+    //  M. Nealon, 2018.
+    //
+
+    // This will be called any time the my-div:style data
+    // changes.
+    //
+    function updateStyle(dataset_id, var_name, var_data) {
+        // We need to get that "self" reference that's
+        // created by the component() function (assuming
+        // AUTO_COMPONENT_DATASET is still true) so we
+        // can call the render() method for the component.
+        var self = dataset.getValue(dataset_id + ":self");
+
+        // This method will update the component_content
+        // string in the component object, render will
+        // update the components content to reflect this
+        // change.
+        self.updateContent(dataset_id + ":" + var_name + " updated");
+
+        // Apply the new style and content.
+        if (self)
+            self.render();
+    }
+
+    function main() {
+        var cmp = component("dp", "my-div", null, "Some text");
+
+        // Create a style object for the component and
+        // subscribe to updates - we'll initialise the
+        // style for this component with red text
+        dataset.setValue("my-div:style", { "color": "red" } );
+
+        // We want to be notified when the style value in
+        // the my-div dataset changes
+        dataset.addObserver({
+            "matchDataset": "my-div",
+            "matchName": "style",
+            "match": updateStyle
+        });
+
+        cmp.build("inner");
+        cmp.render();
+
+        // Update the observed my-div:style value in 5 seconds,
+        // this will trigger the call to updateStyle
+        setTimeout(function() {
+            dataset.setValue("my-div:style", { "color": "yellow" } );
+        }, 5000);
+    }
+
+
+If we chop out all the comments it's pretty small:
+
+
+    function updateStyle(dataset_id, var_name, var_data) {
+        var self = dataset.getValue(dataset_id + ":self");
+
+        if (self)
+            self.render(dataset_id + ":" + var_name + " updated");
+    }
+
+    function main() {
+        var cmp = component("dp", "my-div", null, "");
+
+        dataset.setValue("my-div:style", { "color": "red" } );
+
+        dataset.addObserver({
+            "matchDataset": "my-div",
+            "matchName": "style",
+            "match": updateStyle
+        });
+
+        cmp.build("inner");
+        cmp.render("Some text");
+
+        setTimeout(function() {
+            dataset.setValue("my-div:style", { "color": "yellow" } );
+        }, 5000);
+    }
+
+
+There we go, you'll note I've also made some very minor changes,
+instead of setting the initial content value when we first create
+the object I'm setting it with an empty string:
+
+    var cmp = component("dp", "my-div", null, "");
+
+I'm later passing the initial content as a string to the render()
+method:
+
+    cmp.render("Some text");
+
+Also, in the event handler instead of calling self.updateContent()
+I'm passing the updated value again as a direct parameter to the
+render() function.
+
+Note that this change is reflected within the component object, if
+we pass a string to render it is stored within the object in the
+component_content property.

@@ -1,0 +1,74 @@
+03 - main()
+
+
+The main() function can be found in src/scripts/main.js
+
+This is the main entry point for your application. By default
+the function will be empty:
+
+
+    main() {
+
+    }
+
+
+Create component
+
+We can create a component easily via a call to the component()
+function. This will return a pageComponent() object (see the
+src/scripts/component.js script for more info).
+
+This component can be anything we want:
+
+
+    var component = function(
+        component_type,
+        component_id,
+        component_class,
+        component_content
+    ) {
+        ...
+
+
+The first parameter, component_type, can be any element we want,
+"div" for example. The component_id is the string used to specify
+the id attribute.
+
+The component_class attribute is used to apply a class to the
+component element. This can be set to null and no class is added.
+
+Lastly, the component_content parameter defines the innerHTML
+of the component element.
+
+
+Component methods.
+
+Ok, so we get our component from the component() function:
+
+    var cmp = component("div", "my-div", "div-class", "Some content");
+
+This simply returns the pageComponent object that defines the
+component - to use it we must call its build() method. The build
+method requires one single argument - the id of the parent to build
+the component in:
+
+    cmp.build("parent-container");
+
+This would build our new component - in other words, it takes our
+pageComponent object and translates it to an HTML element, then
+injects it into the parent container.
+
+however, it does not add the component_content to the component
+element! Why? We use the render() method to do this, you'll see
+why in a minute:
+
+    cmp.render();
+
+Now the component is updated with the content. Why this render()?
+
+The build() and render() methods have specific purposes, the build()
+method can be used to define mouse even handlers, the render()
+method can be used to update the css of a component.
+
+To unserdstand how to do this we need to understand datasets and
+how to use them - see 04-datasets.txt for more info.

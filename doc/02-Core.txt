@@ -1,0 +1,71 @@
+02 - Core
+
+
+The core/ directory contains all of the core components needed for
+bricktop to work. It is sub-divided into the following:
+
+
+    src/
+        configs/
+        objects/
+        modules/
+        scripts/
+
+
+All of these sub-directories are intended to facilitate the sequential
+loading of scripts - in the end all of the files in each of these
+directories is a JavaScript file - they can contain any type of code
+you want.
+
+But they are intended to be used for specific things:
+
+
+configs/
+
+The configs/ directory is intended to contain scripts that configure
+the system. These are included first as it's assumed that subsequent
+scripts will depend on configurations being loaded and applied - in
+other words we expect that objects, modules and scripts will probably
+depend on configs. Configs can contain anything, most likely a
+bunch of constant definitions and assignments, although they can
+also contain code/functions.
+
+This doesn't apply to the main config.js (src/boot/config.js) which
+is included directly by index.html file.
+
+
+objects/
+
+After all configs are loaded the scripts in objects/ are loaded, it's
+assumed that these may depend on configs but not modules or scripts,
+however modules and scripts may depend on objects.
+
+
+modules/
+
+Third all modules are loaded from the modules/ directory. Modules
+won't depend on any scripts yet to be included but may possibly
+depend on objects and configs.
+
+
+scripts/
+
+Lastly all scripts are loaded as they may depends on any combination
+of modules, objects and configs.
+
+
+Again - don't get hung up on what type of code each of these files
+contains - it's the purpose and context of the code within that
+matters. It's just a system that allows you to load scripts in a
+order that's logical to your application.
+
+I suggest you look at src/boot/bootloader.js src/boot/config.js for
+more info. The src/boot/config.js script defines all of the sets of
+configs, objects, modules and scripts to be loaded whereas the
+src/boot/bootloader.js does the actual loading of these scripts.
+
+Once all of the scripts have been loaded, the main() function is called,
+this takes over the execution of the application and acts as the main
+controller.
+
+The main() function is defined in src/scripts/main.js

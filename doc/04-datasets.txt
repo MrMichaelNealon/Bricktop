@@ -1,0 +1,84 @@
+04 - datasets
+
+The dataset system is included in the src/modules/dataset.js
+script.
+
+It's fairly simple - it allows us to create datasets or namespaces
+where we can store data as key/value pairs.
+
+A simple example, if we call:
+
+    dataset.setValue("Name", "Michael");
+
+We can then use:
+
+    dataset.getValue("Name");
+
+To return the stored value, makes sense.
+
+In this case we are saving the Name=Michael variable pair to the
+default or "standard" namespace. This is the only namespace that
+exists to begin with - but we can create a new namespace:
+
+    dataset.newNamespace("my-namespace");
+
+And we can now use that namespace to store data:
+
+    dataset.setValue("my-namespace:Name", "Michael");
+
+And retrieve the value:
+
+    dataset.getValue("my-namespace:Name");
+
+
+Component namespaces.
+
+Let's create a new component:
+
+    var cmp = component("p", "my-container", null, "My name is {Name}");
+
+    cmp.build("parent-id");
+
+Now, if we create a namespace that has the same id as our component:
+
+    newNamespace("my-container");
+
+We can now define a "style" object in our namespace:
+
+    setValue("my-container:style", { "color": "#F00" });
+
+The render() method is coded to check for the existence of any namespace
+that has the same id as its component element, if found then it is applied
+when the component is rendered, so if we render the component:
+
+    cmp.render()
+
+The my-container:style is applied to the component and the text would be
+red.
+
+You will notice that the content renders with "My name is false", this
+is because we haven't set the Name variable, we can create it in the
+standard namespace:
+
+    dataset.setValue("Name", "Michael");
+
+Since the value is stored in the standard namespace we don't need to
+specify the namespace in the content string but either of these will
+work:
+
+    "My name is {Name}"
+    "My name is {standard:Name}"
+
+If we want to use a different namespace we can:
+
+    dataset.newNamespace("personal-info");
+    dataset.setValue("personal-info:Name", "Michael");
+
+In which case we absolutely must reference that namespace in the
+content string:
+
+    "My name is {Name}"                 // Will not work
+    "My name is {personal-info:Name}"   // will work
+
+The next section, 05-build.txt, explains the build() method in more
+detail.

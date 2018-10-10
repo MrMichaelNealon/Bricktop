@@ -1,0 +1,188 @@
+05 - build
+
+
+Like the render() method, we can write specific namespaces that
+are used in the build method.
+
+Specifically, we can control mouseover, mouseout and click events
+on a componant.
+
+Let's create and render a new component:
+
+    var cmp = component(
+        "p",                        // paragraph tag
+        "my-component",             // comonent-id
+        null,                       // no class
+        "A {Animal:Type} says {Animal:Sound}"
+    );
+
+    dataset.newDataset("Animal" [
+        { "name": "Type", "data": "Dog" },
+        { "name": "Sound", "data": "woof }
+    ]);
+
+I've introduced something new here - when we create a namespace we
+can pass an array of key/value pairs to be added to the namespace.
+
+Remember - each variable is a name and value pair. A variable is
+literally an object in an array, this object has two properties,
+name which holds the variable name and data which holds the variable
+data.
+
+So doing this:
+
+    dataset.newDataset("Me" [
+        { "name": "Name", "data": "Michael"},
+        { "name": "Age", "data": 38}
+    ]);
+
+Is equivalent to doing:
+
+    dataset.newDataset("Me");
+    dataset.setValue("Me:Name", "Michael");
+    dataset.setValue("Me:Age", 38);
+
+Now that we have our component, we can define some namespaces that
+will instruct the build() method. First thing we need is a namespace
+that shares the same id as our component:
+
+    dataset.newDataset("my-component");
+
+Let's say we wanted our component to notify us when it is clicked, well
+first we'd need a callback function to handle that:
+
+    function cmpHandleClick() {
+        alert("I got clicked!");
+    }
+
+Now we must define a "click" handler in the "my-component" dataset:
+
+    dataset.setValue("my-component:click", cmpHandleClick());
+
+Now any time the my-component component is clicked the cmpHandleClick()
+function will be called.
+
+
+What is this?
+
+In our click handling function the value of "this" is bound to the
+context of the component object (in this case cmp) so we can use
+this within our function that handles our click with ease.
+
+Let's say you wanted to change the color of the text on click for
+example:
+
+    function cmpHandleClick() {
+        this.el.style.color = "red";
+    }
+
+This will work - because the .el property is created within the
+cmp object when we created our component. Other properties we
+can access are:
+
+    parent
+    component_type
+    component_id
+    component_class
+    component_content
+
+Handling the mouseover and mouseout events is pretty much the
+same affair. Here's a simple example that created a new component
+and styles it. When there's a mouseover it will change the style
+and return it to normal on mouseout.
+
+FIRST!!! So far we have been manually creating new datasets for
+our component. We need to take an extra step so that the component()
+function will automatically create the dataset when it creates the
+component.
+
+Open the src/boot/config.js file and find the line:
+
+    AUTO_COMPONENT_DATASET = false;
+
+Set this value to true, this is important. You see the build()
+method can also pass a parameter to the callback functions, to
+be specific - it will pass an instance of the component object
+which is stored in the dataset...so let's say we create a new
+component called cmp and AUTO_COMPONENT_DATASET is true.
+
+    var cmp = component("div", "my-div", null, "Some content");
+
+The component function will create the "my-div" dataset and add
+the "self" variable to the dataset - this "self" variable holds
+a reference to the component object being returned - the code
+directly from the component function (see src/scripts/component.js):
+
+    var cmp =  new pageComponent(
+        component_type,
+        component_id,
+        component_class,
+        component_content
+    );
+
+    if (AUTO_COMPONENT_DATASET) {
+        var datasetReturn = dataset.newDataset(component_id, [
+            { "name": "self", "data": cmp }
+        ]);
+
+        if (! datasetReturn)
+            return false;
+    }
+
+So now when the build() method defines an event handler, it will
+know to automatically pass this "self" reference as a parameter.
+
+This is useful, because even though we can use "this" in the context
+of our component object, we cannot call render() via "this" because
+render() is not defined in that context. In other words, if we want
+to write say, a mouseover handler that can call render() we NEED that
+"self" reference, as you will see in the following code:
+
+
+    // src/scripts/main.js
+    //
+
+
+    function cmpMouseover(self) {
+        // Set the style property for my-div then re-render
+        dataset.setValue(
+            "my-div:style",
+            dataset.getValue("my-div:mouseover-style")
+        );
+        self.render();
+    }
+
+    function cmpMouseout(self) {
+        // Restore the default style then re-render
+        dataset.setValue(
+            "my-div:style",
+            dataset.getValue("my-div:mouseout-style")
+        );
+        self.render();
+    }
+
+    function main() {
+        var cmp = component(
+            "div",
+            "my-div",
+            null,
+            "Current color: {my-div:color}"
+        );
+
+        if (! cmp)
+            errorMsg("Error creating component!");
+
+        // We'll define the mouseover and mouseout handlers as well
+        // as a couple of styles
+        dataset.setValue("my-div:mouseout-style", { "color": "red" } );
+        dataset.setValue("my-div:mouseover-style", { "color": "yellow" } );
+        dataset.setValue("my-div:mouseover", cmpMouseover);
+        dataset.setValue("my-div:mouseout", cmpMouseout);
+
+        // Set the style property for my-div so that the render()
+        // method will apply it
+        dataset.setValue("my-div:style", dataset.getValue("my-div:mouseout-style"));
+
+        cmp.build("inner");
+        cmp.render();
+    }
