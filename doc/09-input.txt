@@ -1,0 +1,116 @@
+09 - input
+
+
+So far we've only dealt with components that output data
+to the display, we also need to be able to handle input
+element like text input fields, range sliders, etc.
+
+I didn't want to get too deep into it earlier when we
+learned about component() (see src/scripts/component.js),
+but I didn't mention the additional, optional parameters
+that it accepts, these are:
+
+    component_bind
+    component_input_type
+
+If we use these two additional parameters when we create
+a new component, we will create an input element of type
+component_input_type that will bind to a particular value
+in a dataset.
+
+So we can create a new text input element like this:
+
+    var cmp = component(
+        "input",
+        "my-input-element",
+        null,
+        "Enter data here",
+        "input-element:data",
+        "text"
+    );
+
+What we're doing is creating a new "text" input element,
+it's default value will be "Enter data here" and the
+data is bound to the "input-element:data" value in the
+dataset.
+
+So now any time we change the text in the input field the
+value of the text input element will be bound to the
+"input-element:data" variable.
+
+Specifying the component_bind parameter will also cause
+the build() method of the component to add an observer
+so that any time "input-element:data" changes the value
+of the input element will be changed to reflect this, so
+we have 2-way data binding.
+
+Here is a very simple example:
+
+
+///////////////////////////////////////////////////////////
+//  src/scripts/main.js
+//
+
+    function main() {
+        var inputCmp;
+        var outputCmp;
+
+        // First, we will create a new dataset where we
+        // will store the value of the range input
+        dataset.newDataset("other", [
+            { "name": "val", "data": 0.0 }
+        ]);
+
+        // Create the range input component
+        inputCmp = component(
+            "input",
+            "my-input",
+            null,
+            0.0,            // Will be assigned to input value
+            "other:val",    // Bind the input value to this
+            "range"         // Type, e.g "text", "password", etc
+        );
+
+        // The output component, this will be updated to show
+        // the value of the range input
+        outputCmp = component(
+            "div",
+            "my-div",
+            null,
+            "Range input value = {other:val}"
+        );
+
+        inputCmp.build("inner");
+        inputCmp.render();
+
+        outputCmp.build("inner");
+        outputCmp.render();
+
+        // Add the observer to re-render the output
+        // comonent any time out value changes
+        dataset.addObserver({
+            "matchDataset": "other",
+            "matchName": "val",
+            "match": function() {
+                outputCmp.render();
+            }
+        });
+
+        // And just for fun, we will automatically update
+        // the value of "other:val" after 5 seconds and
+        // you will see the range input slider jump to
+        // 50 (mid-position).
+        //
+        setTimeout(function() {
+            dataset.setValue("other:val", 50);
+        }, 5000)
+    }
+
+I think it's pretty self-explanitory what is going on here,
+try changing the example to create a text or password
+input field, watch how the output changes as you change the
+data in the text box - how fun!
+
+Next in 10-project.txt we are going to build a real project,
+we will have multiple components firing off in all sorts of
+crazy ways -- a delightful treat, indeed!

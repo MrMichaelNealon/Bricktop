@@ -77,7 +77,12 @@
 
         if (bindings !== null && typeof(bindings[0]) !== "undefined") {
             bindings.forEach(binding => {
-                binding.innerHTML = resolveBindings(binding, modData);
+                if (document.getElementById(binding.id).tagName.toLowerCase() == "input") {
+                    var tag_data = document.getElementById(binding.id).getAttribute(bindTag);
+                //    console.log(tag_data);
+                }
+                else
+                    binding.innerHTML = resolveBindings(binding, modData);
             });
         }
 

@@ -8,7 +8,9 @@
         component_type,
         component_id,
         component_class,
-        component_content
+        component_content,
+        component_bind,
+        component_input_type
     ) {
         this.parent = null;
 
@@ -16,6 +18,9 @@
         this.component_id = component_id;
         this.component_class = component_class;
         this.component_content = component_content;
+
+        this.component_bind = component_bind;
+        this.component_input_type = component_input_type;
 
         this.el;
 
@@ -46,7 +51,10 @@
             if (style)
                 Object.assign(self.el.style, style);
 
-            self.el.textContent = self.component_content;
+            if (self.component_bind)
+                self.el.value = self.component_content;
+            else
+                self.el.textContent = self.component_content;
 
             bindData(dataset);
         };
@@ -70,8 +78,58 @@
 
             document.getElementById(self.parent).appendChild(self.el);
 
+            if (self.component_bind) {
+                var el = document.getElementById(self.component_id);
+
+                createInputComponent(el, tag);
+            }
+
             enableEvents();
         };
+
+
+        var createInputComponent = function(el, tag) {
+            el.setAttribute(tag, self.component_bind);
+            el.setAttribute("name", self.component_bind);
+
+            if (self.component_input_type)
+                el.setAttribute("type", self.component_input_type);
+
+            el.value = self.component_content;
+
+            // The inputs get assigned keyup and change
+            // event handlers. This allows for the value
+            // to be updated to the dataset value that it
+            // is bound to any time the data changes
+            //
+            el.addEventListener("keyup",
+                function() {
+                    dataset.setValue(self.component_bind, el.value);
+                }
+            );
+            el.addEventListener("change",
+                function() {
+                    dataset.setValue(self.component_bind, el.value);
+                }
+            );
+
+            var split_bind = self.component_bind.split(":");
+            var observerObj = {
+                "match": function(dataset_id, var_name, var_data) {
+                    el.value = var_data;
+                }
+            };
+
+            if (split_bind.length >= 2) {
+                observerObj.matchDataset = split_bind[0];
+                observerObj.matchName = split_bind[1];
+            }
+            else  if (split_bind.length == 1)
+                observerObj.matchName = split_bind[0];
+
+            dataset.addObserver(observerObj);
+        };
+
 
 ///////////////////////////////////////////////////////////
 //  enableEvents()
@@ -144,18 +202,34 @@
         component_type,
         component_id,
         component_class,
-        component_content
+        component_content,
+        component_bind,
+        component_input_type
     ) {
         if (component_type === null) component_type = "div";
         if (component_id === null) component_id = "container-id";
         if (component_class === null) component_class = "";
         if (component_content === null) component_content = "&nbsp;";
 
+        if (typeof(component_bind) !== "undefined") {
+            if (component_bind === null) component_bind =  component_id + ":input-value";
+        }
+        else
+            component_bind = false;
+
+        if (typeof(component_input_type) !== "undefined") {
+            if (component_input_type == null) component_input_type = false;
+        }
+        else
+            component_input_type = false;
+
         var cmp =  new pageComponent(
             component_type,
             component_id,
             component_class,
-            component_content
+            component_content,
+            component_bind,
+            component_input_type
         );
 
 //  The AUTO_DATASET option can be set in the main config

@@ -4,7 +4,7 @@
 //  M. Nealon, 2018.
 //
 
-    async function loadAppComponents(component_name, successCallback) {
+    async function loadAppComponents(component_name, successCallback, failureCallback) {
         var component_model = "new " +  component_name + "Model();";
         var component_view = "new " + component_name + "View();";
         var component_controller = "new " + component_name + "Controller(model, view);";
@@ -35,14 +35,20 @@
             //
             var ctr = dataset.getDatasetIndex("controllers");
 
-            if (ctr >= 0) {
-                console.log("Adding new controller: controllers:" + component_name)
+            if (ctr >= 0)
                 dataset.setValue("controllers:" + component_name, controller);
-            }
 
             if (successCallback)
                 successCallback(controller);
         }).catch(function(error_msg) {
-            errorMsg(error_msg);
+            var ctr = dataset.getDatasetIndex("controllers");
+
+            if (ctr >= 0)
+                dataset.setValue("controllers:" + component_name, false);
+
+            if (typeof(failureCallback) !== "undefined")
+                failureCallback(error_msg);
+            else
+                errorMsg(error_msg);
         });
     }

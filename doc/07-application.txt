@@ -237,3 +237,36 @@ of code if you rip the comments.
 
 Pretty neat, using this system we can easily create and manage
 individual components.
+
+
+Error handling
+
+There is an optional third argument we can pass to the
+loadAppComponents() function. If we don't supply this
+argument then an error is thrown which forces the
+application to exit.
+
+We can over-ride this default behaviour by specifying the
+failureCallback function - this allows us to specify a
+callback that's called if the attempt to load any
+components fails. This callback will receive an error
+message as a parameter:
+
+    function handleLoadAppFail(error_msg) {
+        // error handling code here
+    }
+
+    async function main() {
+        // code here ...
+        await loadAppComponents("testapp", false, handleLoadAppFail);
+        // more code here ...
+    }
+
+Also note that in the case where a component could not
+be loaded and the controllers dataset exists then the
+controller will be added to the dataset with a value of
+false.
+
+This means we can still get that value immediately in
+main() without the need for any failureCallback to be
+passed.

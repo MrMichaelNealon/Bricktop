@@ -21,9 +21,9 @@ developer, would put your own application-specific code.
 
 The doc/ directory contains this and other documentation files.
 
-The plugins/ directory normally contains nothing more than jquery,
-if you want to include other plugins you would put the code in
-here.
+The plugins/ directory contains nothing. If you intend to use
+plugins or libraries like jquery this is the place to put them
+although you will still have to implicitly include them.
 
 The src/ directory contains all of the core application code, this
 is probably the most important directory to us and will be further
@@ -34,4 +34,4 @@ a set of default sheets that can be used in your application or
 you can create your own.
 
 Lastly - the index.html file which is the main entry point for
-an application.
+our applications.
